@@ -1,0 +1,73 @@
+{
+      "package_id": 21520325,
+      "package_full_name": "kylef/Commander",
+      "package_name": "Commander",
+      "description": "Compose beautiful command line interfaces in Swift",
+      "language": "Swift",
+      "forks_count": 17,
+      "stargazers_count": 451,
+      "api_url": "https://api.github.com/repos/kylef/Commander",
+      "html_url": "https://github.com/kylef/Commander",
+      "git_clone_url": "https://github.com/kylef/Commander.git",
+      "license_file": "Copyright (c) 2015, Kyle Fuller\nAll rights reserved.\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n* Redistributions of source code must retain the above copyright notice, this\n  list of conditions and the following disclaimer.\n\n* Redistributions in binary form must reproduce the above copyright notice,\n  this list of conditions and the following disclaimer in the documentation\n  and/or other materials provided with the distribution.\n\n* Neither the name of the {organization} nor the names of its\n  contributors may be used to endorse or promote products derived from\n  this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\"\nAND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE\nIMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL\nDAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.",
+      "read_me_file": "<img src=\"Commander.png\" width=80 height=83 alt=\"Commander\" />\n\n# Commander\n\n[![Build Status](https://img.shields.io/travis/kylef/Commander/master.svg?style=flat)](https://travis-ci.org/kylef/Commander)\n\nCommander is a small Swift framework allowing you to craft beautiful command\nline interfaces in a composable way.\n\n## Usage\n\n##### Simple Hello World\n\n```swift\nimport Commander\n\nlet main = command {\n  print(\"Hello World\")\n}\n\nmain.run()\n```\n\n##### Type-safe argument handling\n\nThe closure passed to the command function takes any arguments that\nconform to `ArgumentConvertible`, Commander will automatically convert the\narguments to these types. If they can't be converted the user will receive a\nnice error message informing them that their argument doesn't match the\nexpected type.\n\n`String`, `Int`, `Double`, and `Float` are extended to conform to\n`ArgumentConvertible`, you can easily extend any other class or structure\nso you can use it as an argument to your command.\n\n```swift\ncommand { (hostname:String, port:Int) in\n  print(\"Connecting to \\(hostname) on port \\(port)...\")\n}\n```\n\n##### Grouping commands\n\nYou can group a collection of commands together.\n\n```swift\nGroup {\n  $0.command(\"login\") { (name:String) in\n    print(\"Hello \\(name)\")\n  }\n\n  $0.command(\"logout\") {\n    print(\"Goodbye.\")\n  }\n}\n```\n\nUsage:\n\n```shell\n$ auth\nUsage:\n\n    $ auth COMMAND\n\nCommands:\n\n    + login\n    + logout\n\n$ auth login Kyle\nHello Kyle\n$ auth logout\nGoodbye.\n```\n\n#### Describing arguments\n\nYou can describe arguments and options for a command to auto-generate help,\nthis is done by passing in descriptors of these arguments.\n\nFor example, to describe a command which takes two options, `--name` and\n`--count` where the default value for name is `world` and the default value for\ncount is `1`.\n\n```swift\ncommand(\n  Option(\"name\", \"world\"),\n  Option(\"count\", 1, description: \"The number of times to print.\")\n) { name, count in\n  for _ in 0..<count {\n    print(\"Hello \\(name)\")\n  }\n}\n```\n\n```shell\n$ hello --help\nUsage:\n\n    $ hello\n\nOptions:\n    --name\n    --count - The number of times to print.\n\n$ hello\nHello world\n\n$ hello --name Kyle\nHello Kyle\n\n$ hello --name Kyle --count 4\nHello Kyle\nHello Kyle\nHello Kyle\nHello Kyle\n```\n\n##### Types of descriptors\n\n- Argument - A positional argument.\n- Option - An optional option with a value.\n- Flag - A boolean, on/off flag.\n- VaradicArgument - A varadic argument\n\n#### Using the argument parser\n\n**NOTE**: *`ArgumentParser` itself is `ArgumentConvertible` so you can also\nget hold of the raw argument parser to perform any custom parsing.*\n\n```swift\ncommand { (name:String, parser:ArgumentParser) in\n  if parser.hasOption(\"verbose\") {\n    print(\"Verbose mode enabled\")\n  }\n\n  print(\"Hello \\(name)\")\n}\n```\n\n```shell\n$ tool Kyle --verbose\nVerbose mode enabled\nHello Kyle\n```\n\n### Examples tools using Commander\n\n- [QueryKit](https://github.com/QueryKit/querykit-cli) via CocoaPods Rome\n\n## Installation\n\nYou can install Commander in many ways, with SPM (Swift Package Manager), [Conche](https://github.com/Conche/Conche), CocoaPods or [CocoaPods-Rome](https://github.com/neonichu/Rome).\n\n### Frameworks and `rpath`\n\nIt's important to note that the `.framework` or dynamic library file for\nCommander (and any other dependency) must be available at run-time for your\ncommand line tool. Unless you are using SPM.\n\nApplications will look in their `rpath` which contains paths of where it expects\nthe `.framework`s to be found at.\n\nUsing a Swift script, you can use the `-F` flag for setting framework search\npaths, as follows:\n\n```swift\n#!/usr/bin/env xcrun swift -F Rome\n\nimport Commander\n```\n\nFor compiled Swift code, you will need to add an rpath pointing to your\ndependency frameworks, as follows:\n\n```shell\n$ install_name_tool -add_rpath \"@executable_path/../Frameworks/\"  \"bin/querykit\"\n```\n\nWhere \"../Frameworks\" relative to the executable path is used to find the\nframeworks and `bin/querykit` is the executable.\n\nWhen installing your executable on other systems it's important to copy the\nframeworks and the binary.\n\n### Architecture\n\n##### `CommandType`\n\n`CommandType` is the core protocol behind commands, it's an object or\nstructure that has a `run` method which takes an `ArgumentParser`.\n\nBoth the `command` functions and `Group` return a command that conforms to\n`CommandType` which can easily be interchanged.\n\n```swift\nprotocol CommandType {\n  func run(parser:ArgumentParser) throws\n}\n```\n\n##### `ArgumentConvertible`\n\nThe convenience `command` function takes a closure for your command that\ntakes arguments which conform to the `ArgumentConvertible` protocol. This\nallows Commander to easily convert arguments to the types you would like\nto use for your command.\n\n```swift\nprotocol ArgumentConvertible {\n  init(parser: ArgumentParser) throws\n}\n```\n\n##### `ArgumentParser`\n\nThe `ArgumentParser` is an object that allowing you to pull out options,\nflags and positional arguments.\n\n## License\n\nCommander is available under the BSD license. See the [LICENSE file](LICENSE)\nfor more info.",
+      "created_at": "2014-07-05T13:15:26.000Z",
+      "pushed_at": "2016-02-16T18:27:35.000Z",
+      "updated_at": "2016-02-22T16:29:03.000Z",
+      "last_crawled_at": "2016-02-16T23:49:17.503Z",
+      "last_indexed_at": "2016-02-22T16:35:16.899Z",
+      "featured": true,
+      "license_name": "BSD 3-clause \"New\" or \"Revised\" License",
+      "license_link": "https://api.github.com/licenses/bsd-3-clause",
+      "latest_version": "0.4.1",
+      "latest_zipball_url": "https://api.github.com/repos/kylef/Commander/zipball/0.4.1",
+      "latest_tarball_url": "https://api.github.com/repos/kylef/Commander/tarball/0.4.1",
+      "featured_img_url": null,
+      "Categories": [
+        {
+          "category_id": 2,
+          "category_name": "Command Line",
+          "last_updated_at": null,
+          "_pivot_package_id": 21520325,
+          "_pivot_category_id": 2
+        }
+      ],
+      "Dependents": [
+        {
+          "package_id": 47516776,
+          "package_full_name": "neonichu/Chocolat",
+          "git_clone_url": "https://github.com/neonichu/Chocolat.git"
+        },
+        {
+          "package_id": 48333590,
+          "package_full_name": "neonichu/Azkaban",
+          "git_clone_url": "https://github.com/neonichu/Azkaban.git"
+        },
+        {
+          "package_id": 48130605,
+          "package_full_name": "kylef/spectre-build",
+          "git_clone_url": "https://github.com/kylef/spectre-build.git"
+        },
+        {
+          "package_id": 47415925,
+          "package_full_name": "kylef/Curassow",
+          "git_clone_url": "https://github.com/kylef/Curassow.git"
+        },
+        {
+          "package_id": 49376496,
+          "package_full_name": "neonichu/spectre-build",
+          "git_clone_url": "https://github.com/neonichu/spectre-build.git"
+        }
+      ],
+      "Dependencies": [
+        {
+          "package_id": 21520325,
+          "dependency_id": 48130605,
+          "dependency_version": "majorVersion: 0",
+          "last_crawled_at": "2016-02-17T05:49:18.935Z",
+          "dependency_full_name": "kylef/spectre-build",
+          "dependency_git_url": "https://github.com/kylef/spectre-build.git",
+          "dependency_is_swift_project": true
+        }
+      ]
+    }

@@ -1,0 +1,14 @@
+#!/usr/bin/env cathode
+
+import Chores
+import Foundation
+
+extension NSBundle {
+  func fromAppStore() -> Bool? {
+    return appStoreReceiptURL?.checkResourceIsReachableAndReturnError(nil)  
+  }
+}
+
+let paths = (>["mdfind", "kMDItemCFBundleIdentifier == 'com.apple.dt.Xcode'"]).stdout.characters
+let xcodes = paths.split { $0 == "\n" }.map(String.init)
+print(xcodes.filter { !NSBundle(path: $0)!.fromAppStore()! })
