@@ -2,7 +2,7 @@ import Foundation
 import Decodable
 import Version
 
-let PKG_CATALOGUE_URL = "https://swiftpkgs.ng.bluemix.net/api/packages?items=500"
+let PKG_CATALOGUE_URL = "https://swiftpkgs.ng.bluemix.net/api/packages?items=1000"
 
 struct Package {
 	let name: String
