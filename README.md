@@ -1,5 +1,7 @@
 # cathode
 
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
 Cathode makes it easy to run Swift scripts, by utilizing [chswift][1] to choose
 the right Swift version and the [Swift Package Manager][2] to install missing dependencies.
 
